@@ -3,7 +3,6 @@ import 'package:cloudboard/src/storage/storage_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 
 class MyApp extends StatelessWidget {
   final StorageController storageController;
@@ -14,10 +13,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    firebase_auth.User? user = firebase_auth.FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      firebase_auth.FirebaseAuth.instance.signInAnonymously();
-    }
     return MaterialApp(
       restorationScopeId: 'app',
       localizationsDelegates: const [
