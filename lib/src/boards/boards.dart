@@ -33,38 +33,64 @@ class _BoardsState extends State<Boards> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Boards'),
+        elevation: 0.0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.search),
+            onPressed: () => _searchBoard(context),
+          ),
+        ],
       ),
       floatingActionButton: FloatingActionButton(
           child: const Icon(Icons.add),
           onPressed: () {
             _addBoard(context);
           }),
-      body: ListView.builder(
-        itemCount: _boards.length,
-        itemBuilder: (context, index) {
-          return ListTile(
-            title: Text(
-              asPrettyBoardName(_boards[index]),
+      body: Column(
+        children: [
+          Material(
+            elevation: 4.0,
+            color: Theme.of(context).primaryColor,
+            child: Text(
+              'Choose a board',
+              style: Theme.of(context)
+                  .textTheme
+                  .headline1
+                  ?.copyWith(color: Colors.white),
             ),
-            onTap: () {
-              widget.storageController.boardName = _boards[index];
-              Navigator.of(context).pushNamed(
-                FilePickingPage.routeName,
-              );
-            },
-            trailing: const Icon(
-              Icons.arrow_forward_ios,
-              size: 24.0,
+          ),
+          Expanded(
+            child: ListView.builder(
+              itemCount: _boards.length,
+              itemBuilder: (context, index) {
+                return Material(
+                  elevation: 4.0,
+                  child: ListTile(
+                    title: Text(
+                      asPrettyBoardName(_boards[index]),
+                    ),
+                    onTap: () {
+                      widget.storageController.boardName = _boards[index];
+                      Navigator.of(context).pushNamed(
+                        FilePickingPage.routeName,
+                      );
+                    },
+                    trailing: const Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16.0,
+                    ),
+                  ),
+                );
+              },
             ),
-          );
-        },
+          ),
+        ],
       ),
     );
   }
 
-  Future<void> _addBoard(BuildContext context) async {
-    final newBoardName = await showDialog(
+  Future<dynamic> _pickBoardName(BuildContext context) async {
+    return showDialog(
       context: context,
       builder: (context) {
         return Dialog(
@@ -80,9 +106,22 @@ class _BoardsState extends State<Boards> {
         );
       },
     );
-    widget.storageController.addBoard(newBoardName);
+  }
+
+  Future<void> _searchBoard(BuildContext context) async {
+    final newBoardName = await _pickBoardName(context);
+    String finalName =
+        widget.storageController.addBoard(newBoardName, generate: false);
     setState(() {
-      _boards.add(newBoardName);
+      _boards.add(finalName);
+    });
+  }
+
+  Future<void> _addBoard(BuildContext context) async {
+    final newBoardName = await _pickBoardName(context);
+    String finalName = widget.storageController.addBoard(newBoardName);
+    setState(() {
+      _boards.add(finalName);
     });
   }
 
@@ -90,6 +129,6 @@ class _BoardsState extends State<Boards> {
     if (boardName == widget.userController.user?.uid) {
       return 'My Board';
     }
-    return boardName.split('-').last;
+    return boardName;
   }
 }

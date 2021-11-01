@@ -22,7 +22,10 @@ class UserController {
 
   Future<void> googleSignIn() async {
     // Trigger the authentication flow
-    final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+    final GoogleSignInAccount? googleUser = await GoogleSignIn(
+            clientId:
+                '86535198918-s0ok5454fca77kbj44g2u4bdaordteko.apps.googleusercontent.com')
+        .signIn();
 
     // Obtain the auth details from the request
     final GoogleSignInAuthentication? googleAuth =

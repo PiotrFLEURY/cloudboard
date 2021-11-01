@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 import 'dart:typed_data';
 
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
@@ -97,7 +98,22 @@ class StorageController {
     await ref.writeToFile(tempFile);
   }
 
-  void addBoard(newBoardName) {
+  String addBoard(newBoardName, {bool generate = true}) {
+    if (generate) {
+      int randomId = Random().nextInt(9999);
+      String generatedName = '$newBoardName-$randomId';
+      _availableBoards.add(generatedName);
+      return generatedName;
+    }
     _availableBoards.add(newBoardName);
+    return newBoardName;
+  }
+
+  void deleteFile(String file) {
+    firebase_storage.FirebaseStorage.instance
+        .ref()
+        .child(boardName)
+        .child(file)
+        .delete();
   }
 }
