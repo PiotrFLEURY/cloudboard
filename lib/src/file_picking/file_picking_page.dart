@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'dart:typed_data';
 
 import 'package:cloudboard/src/storage/storage_controller.dart';
+import 'package:cloudboard/src/user/user_controller.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/foundation.dart';
@@ -11,10 +11,12 @@ import 'package:url_launcher/url_launcher.dart';
 class FilePickingPage extends StatelessWidget {
   static const String routeName = '/file_picking';
 
+  final UserController userController;
   final StorageController storageController;
 
   const FilePickingPage({
     Key? key,
+    required this.userController,
     required this.storageController,
   }) : super(key: key);
 
@@ -22,36 +24,43 @@ class FilePickingPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: Scaffold(
-        body: Center(
-          child: Column(
-            children: [
-              ElevatedButton(
-                onPressed: () => _pickFile(context),
-                child: const Text('Pick file'),
-              ),
-              Expanded(
-                child: FutureBuilder(
-                  future: storageController.listFiles(),
-                  builder: (context, snapshot) {
-                    if (snapshot.hasData) {
-                      final List<String> files =
-                          (snapshot.data ?? []) as List<String>;
-                      return ListView.builder(
-                          itemCount: files.length,
-                          itemBuilder: (context, index) {
-                            final file = files[index];
-                            return ListTile(
-                              title: Text(file),
-                              onTap: () => _showDownloadLink(context, file),
-                            );
-                          });
-                    }
-                    return const Center(child: CircularProgressIndicator());
-                  },
-                ),
-              ),
-            ],
+        floatingActionButton: FloatingActionButton(
+          child: Icon(Icons.add),
+          onPressed: () => _pickFile(context),
+        ),
+        appBar: AppBar(
+          title: Text(
+            storageController.boardName == userController.user?.uid
+                ? 'My board'
+                : storageController.boardName,
           ),
+        ),
+        body: FutureBuilder(
+          future: storageController.listFiles(),
+          builder: (context, snapshot) {
+            if (snapshot.hasData) {
+              final List<String> files = (snapshot.data ?? []) as List<String>;
+              if (files.isEmpty) {
+                return const Center(
+                  child: Text('No files'),
+                );
+              }
+              return ListView.builder(
+                  itemCount: files.length,
+                  itemBuilder: (context, index) {
+                    final file = files[index];
+                    return ListTile(
+                      title: Text(file),
+                      onTap: () => _showDownloadLink(context, file),
+                      trailing: const Icon(
+                        Icons.arrow_forward_ios,
+                        size: 24.0,
+                      ),
+                    );
+                  });
+            }
+            return const Center(child: CircularProgressIndicator());
+          },
         ),
       ),
     );
@@ -101,7 +110,17 @@ class FilePickingPage extends StatelessWidget {
 
     if (result != null) {
       var firstFile = result.files.first;
-      storageController.uploadFile(firstFile.bytes!, firstFile.name);
+      if (kIsWeb) {
+        storageController.uploadFile(
+          bytes: firstFile.bytes!,
+          name: firstFile.name,
+        );
+      } else if (firstFile.path != null) {
+        storageController.uploadFile(
+          file: File(firstFile.path!),
+          name: firstFile.name,
+        );
+      }
     } else {
       // User canceled the picker
       _showBanner(context, 'User canceled the picker');

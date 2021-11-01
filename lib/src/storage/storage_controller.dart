@@ -5,13 +5,28 @@ import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/foundation.dart';
 
 class StorageController {
-  String boardName = 'uploads';
+  late String _boardName;
+  final Set<String> _availableBoards = <String>{};
+
+  String get boardName => _boardName;
+
+  List<String> get availableBoards => _availableBoards.toList();
+
+  set boardName(String? value) {
+    if (value == null) {
+      _boardName = 'uploads';
+    } else {
+      _boardName = value;
+    }
+    _availableBoards.add(_boardName);
+  }
 
   /// The user selects a file, and the task is added to the list.
-  Future<firebase_storage.UploadTask> uploadFile(
-    Uint8List bytes,
-    String name,
-  ) async {
+  Future<firebase_storage.UploadTask> uploadFile({
+    File? file,
+    Uint8List? bytes,
+    required String name,
+  }) async {
     firebase_storage.UploadTask uploadTask;
 
     // Create a Reference to the file
@@ -27,9 +42,9 @@ class StorageController {
         });
 
     if (kIsWeb) {
-      uploadTask = ref.putData(bytes, metadata);
+      uploadTask = ref.putData(bytes!, metadata);
     } else {
-      uploadTask = ref.putFile(File.fromRawPath(bytes), metadata);
+      uploadTask = ref.putFile(file!, metadata);
     }
 
     return Future.value(uploadTask);
@@ -40,6 +55,7 @@ class StorageController {
     final extension = name.split('.').last;
     switch (extension) {
       case 'jpg':
+      case 'jpeg':
         return 'image/jpeg';
       case 'png':
         return 'image/png';
@@ -79,5 +95,9 @@ class StorageController {
     if (tempFile.existsSync()) await tempFile.delete();
 
     await ref.writeToFile(tempFile);
+  }
+
+  void addBoard(newBoardName) {
+    _availableBoards.add(newBoardName);
   }
 }
