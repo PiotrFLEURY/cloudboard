@@ -19,6 +19,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   google_sign_in: ^5.2.1
+  shared_preferences: ^2.0.8
   url_launcher: ^6.0.12
 
 dev_dependencies:

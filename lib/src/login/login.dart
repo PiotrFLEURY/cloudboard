@@ -67,14 +67,12 @@ class LoginPage extends StatelessWidget {
 
   Future<void> _anonymousSignIn(BuildContext context) async {
     await userController.anonymousSignIn();
-    storageController.boardName = userController.user?.uid;
     Navigator.of(context).pushReplacementNamed(Boards.routeName);
   }
 
   Future<void> _googleSingIn(BuildContext context) async {
     try {
       userController.googleSignIn();
-      storageController.boardName = userController.user?.uid;
       Navigator.of(context).pushReplacementNamed(Boards.routeName);
     } catch (e) {
       debugPrint(e.toString());

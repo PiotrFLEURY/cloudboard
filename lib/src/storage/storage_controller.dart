@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageController {
   late String _boardName;
@@ -13,13 +14,29 @@ class StorageController {
 
   List<String> get availableBoards => _availableBoards.toList();
 
+  StorageController() {
+    _initialize();
+  }
+
+  Future<void> _initialize() async {
+    final prefs = await SharedPreferences.getInstance();
+    final boards = prefs.getStringList('boards');
+    if (boards != null) {
+      _availableBoards.addAll(boards);
+    }
+  }
+
+  Future<void> saveBoards() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList('boards', _availableBoards.toList());
+  }
+
   set boardName(String? value) {
     if (value == null) {
       _boardName = 'uploads';
     } else {
       _boardName = value;
     }
-    _availableBoards.add(_boardName);
   }
 
   /// The user selects a file, and the task is added to the list.
@@ -106,6 +123,7 @@ class StorageController {
       return generatedName;
     }
     _availableBoards.add(newBoardName);
+    saveBoards();
     return newBoardName;
   }
 
@@ -115,5 +133,18 @@ class StorageController {
         .child(boardName)
         .child(file)
         .delete();
+  }
+
+  Future<void> deleteBoard(String board) async {
+    firebase_storage.ListResult listResult = await firebase_storage
+        .FirebaseStorage.instance
+        .ref()
+        .child(boardName)
+        .listAll();
+    for (var item in listResult.items) {
+      item.delete();
+    }
+    _availableBoards.remove(board);
+    saveBoards();
   }
 }

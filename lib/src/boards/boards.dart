@@ -25,8 +25,14 @@ class _BoardsState extends State<Boards> {
 
   @override
   void initState() {
-    _boards = widget.storageController.availableBoards;
+    _onRefresh();
     super.initState();
+  }
+
+  Future<void> _onRefresh() async {
+    setState(() {
+      _boards = widget.storageController.availableBoards;
+    });
   }
 
   @override
@@ -48,8 +54,8 @@ class _BoardsState extends State<Boards> {
           }),
       body: Column(
         children: [
-          Material(
-            elevation: 4.0,
+          Container(
+            width: double.infinity,
             color: Theme.of(context).primaryColor,
             child: Text(
               'Choose a board',
@@ -60,29 +66,43 @@ class _BoardsState extends State<Boards> {
             ),
           ),
           Expanded(
-            child: ListView.builder(
-              itemCount: _boards.length,
-              itemBuilder: (context, index) {
-                return Material(
-                  elevation: 4.0,
-                  child: ListTile(
-                    title: Text(
-                      asPrettyBoardName(_boards[index]),
-                    ),
-                    onTap: () {
-                      widget.storageController.boardName = _boards[index];
-                      Navigator.of(context).pushNamed(
-                        FilePickingPage.routeName,
-                      );
-                    },
-                    trailing: const Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16.0,
-                    ),
+            child: Builder(builder: (context) {
+              if (_boards.isEmpty) {
+                return Center(
+                  child: Text(
+                    'No boards available',
+                    style: Theme.of(context).textTheme.headline4,
                   ),
                 );
-              },
-            ),
+              }
+              return ListView.builder(
+                itemCount: _boards.length,
+                itemBuilder: (context, index) {
+                  return Material(
+                    elevation: 4.0,
+                    child: ListTile(
+                      title: Text(
+                        asPrettyBoardName(_boards[index]),
+                      ),
+                      onTap: () {
+                        widget.storageController.boardName = _boards[index];
+                        Navigator.of(context).pushNamed(
+                          FilePickingPage.routeName,
+                        );
+                      },
+                      trailing: IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () async {
+                          await widget.storageController
+                              .deleteBoard(_boards[index]);
+                          _onRefresh();
+                        },
+                      ),
+                    ),
+                  );
+                },
+              );
+            }),
           ),
         ],
       ),
@@ -94,14 +114,17 @@ class _BoardsState extends State<Boards> {
       context: context,
       builder: (context) {
         return Dialog(
-          child: TextField(
-            autofocus: true,
-            decoration: const InputDecoration(
-              hintText: 'Enter a name for the new board',
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              autofocus: true,
+              decoration: const InputDecoration(
+                hintText: 'Enter a name for the new board',
+              ),
+              onSubmitted: (value) {
+                Navigator.of(context).pop(value);
+              },
             ),
-            onSubmitted: (value) {
-              Navigator.of(context).pop(value);
-            },
           ),
         );
       },
